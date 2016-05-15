@@ -15,8 +15,7 @@ public class InOutConfigurationDO {
 	private String request;
 	private String response;
 
-	protected InOutConfigurationDO() {
-	}
+	public InOutConfigurationDO(){}
 
 	public InOutConfigurationDO(String name, String request, String response) {
 		this.name = name;

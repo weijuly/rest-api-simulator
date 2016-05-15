@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.weijuly.develop.ras.data.InOutConfiguration;
 
 @Aspect
@@ -17,7 +18,7 @@ public class AdminTransportLogger {
 	final Logger logger = LoggerFactory.getLogger(AdminTransportLogger.class);
 
 	@Autowired
-	ObjectMapper mapper; // Auto-wired by framework
+	ObjectMapper mapper;
 
 	@Pointcut("execution(* com.weijuly.develop.ras.impl.AdminImpl.create(com.weijuly.develop.ras.data.InOutConfiguration)) && args(config)")
 	public void create(InOutConfiguration config) {
@@ -25,11 +26,12 @@ public class AdminTransportLogger {
 
 	@Around("create(config)")
 	public Object logTransport(ProceedingJoinPoint point,
-			InOutConfiguration config) throws Throwable {
+							   InOutConfiguration config) throws Throwable {
 		try {
-			logger.info("RequestBody: {}", mapper.writeValueAsString(config));
+			mapper.enable(SerializationFeature.INDENT_OUTPUT);
+			logger.info("request body: {}", mapper.writeValueAsString(config));
 			Object result = point.proceed();
-			logger.info("ResponseBody: {}", mapper.writeValueAsString(result));
+			logger.info("response body: {}", mapper.writeValueAsString(result));
 			return result;
 		} catch (Throwable ex) {
 			logger.info("Demanding refund !");
