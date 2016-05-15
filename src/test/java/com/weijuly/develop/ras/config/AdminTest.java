@@ -3,6 +3,8 @@ package com.weijuly.develop.ras.config;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.http.HttpStatus.CREATED;
 
+import java.util.List;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,6 +26,8 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.weijuly.develop.ras.data.InOutConfiguration;
+import com.weijuly.develop.ras.persist.InOutConfigurationDAO;
+import com.weijuly.develop.ras.persist.InOutConfigurationDO;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(Application.class)
@@ -34,9 +38,12 @@ public class AdminTest {
 
 	RestTemplate template = new TestRestTemplate();
 	HttpHeaders requestHeaders = null;
-	
+
 	@Autowired
 	ObjectMapper mapper;
+
+	@Autowired
+	InOutConfigurationDAO dao;
 
 	private final String ADMIN_URL = "http://localhost:8080/admin";
 
@@ -83,6 +90,12 @@ public class AdminTest {
 
 		Assert.assertEquals(CREATED, response.getStatusCode());
 		Assert.assertEquals(config, response.getBody());
+
+		List<InOutConfigurationDO> rows = dao.findByName("sample");
+		for (InOutConfigurationDO row : rows) {
+			System.out.println(row.getName() + "||" + row.getRequest() + "||"
+					+ row.getResponse());
+		}
 	}
 
 	private InOutConfiguration createSampleConfig() {
