@@ -16,26 +16,26 @@ public class InputValidatorTest {
 
 	@Test(expected = ConfigException.class)
 	public void shouldThrowExceptionForNullName() throws Exception {
-		InOutConfiguration config = new InOutConfiguration(null, null, null);
+		InOutConfiguration config = new InOutConfiguration(null,null, null, null);
 		InputValidator.validate(config);
 	}
 
 	@Test(expected = ConfigException.class)
 	public void shouldThrowExceptionForEmptyName() throws Exception {
-		InOutConfiguration config = new InOutConfiguration("", null, null);
+		InOutConfiguration config = new InOutConfiguration(null,"", null, null);
 		InputValidator.validate(config);
 	}
 
 	@Test(expected = ConfigException.class)
 	public void shouldThrowExceptionForNullRequest() throws Exception {
-		InOutConfiguration config = new InOutConfiguration("sample", null, null);
+		InOutConfiguration config = new InOutConfiguration(null,"sample", null, null);
 		InputValidator.validate(config);
 	}
 
 	@Test(expected = ConfigException.class)
 	public void shouldThrowExceptionForNullResponse() throws Exception {
 		HTTPRequest request = new HTTPRequest("GET", "/india", null, null);
-		InOutConfiguration config = new InOutConfiguration("sample", request, null);
+		InOutConfiguration config = new InOutConfiguration(null,"sample", request, null);
 		InputValidator.validate(config);
 	}
 
@@ -43,7 +43,7 @@ public class InputValidatorTest {
 	public void shouldNotThrowWhenArgsOk() throws Exception {
 		HTTPRequest request = new HTTPRequest("GET", "/india", null, null);
 		HTTPResponse response = new HTTPResponse(200, null, "--");
-		InOutConfiguration config = new InOutConfiguration("sample", request, response);
+		InOutConfiguration config = new InOutConfiguration(null,"sample", request, response);
 		InputValidator.validate(config);
 	}
 }

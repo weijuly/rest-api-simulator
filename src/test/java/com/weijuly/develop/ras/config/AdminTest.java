@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.weijuly.develop.ras.data.HTTPRequest;
 import com.weijuly.develop.ras.data.HTTPResponse;
 import com.weijuly.develop.ras.data.InOutConfiguration;
-import org.junit.Assert;
+import com.weijuly.develop.ras.persist.InOutConfigurationDAO;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,20 +23,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.*;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(Application.class)
-@TestExecutionListeners(listeners = {DependencyInjectionTestExecutionListener.class })
+@TestExecutionListeners(listeners = {DependencyInjectionTestExecutionListener.class})
 @WebIntegrationTest
 public class AdminTest {
 
 	RestTemplate template = new TestRestTemplate();
 	HttpHeaders requestHeaders = null;
+	String name = "sample";
 
 	@Autowired
 	ObjectMapper mapper;
+
+	@Autowired
+	InOutConfigurationDAO dao;
 
 	private final String ADMIN_URL = "http://localhost:8080/admin";
 
@@ -44,14 +47,14 @@ public class AdminTest {
 	public void setup() {
 		requestHeaders = new HttpHeaders();
 		requestHeaders.setContentType(MediaType.APPLICATION_JSON);
+		dao.deleteAll();
 	}
 
+	@Test
 	public void adminShouldRespond() {
 		ResponseEntity<String> response = template.getForEntity(ADMIN_URL,
 				String.class);
-		Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
-		String string = response.getBody();
-		assertNotNull(string);
+		assertEquals(METHOD_NOT_ALLOWED, response.getStatusCode());
 	}
 
 	@Test
@@ -65,16 +68,13 @@ public class AdminTest {
 		ResponseEntity<String> response = template
 				.postForEntity(ADMIN_URL, request, String.class);
 
-		Assert.assertEquals(BAD_REQUEST, response.getStatusCode());
-
+		assertEquals(BAD_REQUEST, response.getStatusCode());
 	}
 
 	@Test
 	public void shouldPersistConfig() throws JsonProcessingException {
+
 		InOutConfiguration config = config();
-
-		System.out.println(mapper.writeValueAsString(config));
-
 		HttpHeaders requestHeaders = new HttpHeaders();
 		requestHeaders.setContentType(MediaType.APPLICATION_JSON);
 		HttpEntity<String> request = new HttpEntity<String>(
@@ -82,7 +82,22 @@ public class AdminTest {
 		ResponseEntity<InOutConfiguration> response = template
 				.postForEntity(ADMIN_URL, request, InOutConfiguration.class);
 
-		Assert.assertEquals(CREATED, response.getStatusCode());
+		assertEquals(CREATED, response.getStatusCode());
+		assertNotNull(response.getBody());
+		assertNotNull(response.getBody().getId());
+		assertEquals(name, response.getBody().getName());
+
+		response = template.getForEntity(String.format("%s/%d", ADMIN_URL, response.getBody().getId()),
+				InOutConfiguration.class);
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		assertEquals(name, response.getBody().getName());
+
+	}
+
+	@Test
+	public void shouldReturnNotFoundWhenPassedNonExistentId() {
+		ResponseEntity<String> response = template.getForEntity(ADMIN_URL + "/43046", String.class);
+		assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
 	}
 
 	private InOutConfiguration config() {
@@ -91,7 +106,7 @@ public class AdminTest {
 		headers.put("Reject", "Angelina Joulie");
 		HTTPRequest request = new HTTPRequest("GET", "/korea/seoul", headers, "body");
 		HTTPResponse response = new HTTPResponse(200, headers, "body");
-		InOutConfiguration config = new InOutConfiguration("sample", request, response);
+		InOutConfiguration config = new InOutConfiguration(null, name, request, response);
 		return config;
 	}
 

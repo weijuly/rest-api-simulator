@@ -43,7 +43,7 @@ public class DataTransformerTest {
 
 	@Test
 	public void transformShouldPopulateNullStrings() throws Exception {
-		InOutConfigurationDO configurationDO = xformer.xform(new InOutConfiguration(name, null, null));
+		InOutConfigurationDO configurationDO = xformer.xform(new InOutConfiguration(null,name, null, null));
 		assertNotNull(configurationDO);
 		assertEquals("null", configurationDO.getRequest());
 		assertEquals("null", configurationDO.getResponse());
@@ -52,7 +52,7 @@ public class DataTransformerTest {
 
 	@Test
 	public void transformShouldTransform() throws Exception {
-		InOutConfigurationDO configurationDO = xformer.xform(new InOutConfiguration(name, request(), response()));
+		InOutConfigurationDO configurationDO = xformer.xform(new InOutConfiguration(null,name, request(), response()));
 		assertNotNull(configurationDO);
 		assertEquals(name, configurationDO.getName());
 		assertNotNull(configurationDO.getRequest());
@@ -79,7 +79,6 @@ public class DataTransformerTest {
 		assertNotNull(configuration.getRequest());
 		assertNotNull(configuration.getResponse());
 	}
-
 
 	private HTTPResponse response() {
 		return new HTTPResponse(200, headers(), body());

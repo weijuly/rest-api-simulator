@@ -15,21 +15,16 @@ public class DataTransformer {
 	@Autowired
 	ObjectMapper mapper;
 
-	//TODO: Need to see why autowiring doesn't work here...
-//	public DataTransformer(){
-//		mapper = new ObjectMapper();
-//	}
-
 	public InOutConfigurationDO xform(final InOutConfiguration input) throws JsonProcessingException {
-		return  new InOutConfigurationDO(input.getName(),
-				mapper.writeValueAsString(input.getRequest()), mapper.writeValueAsString(input.getResponse()));
+		return new InOutConfigurationDO(input.getName(),
+				mapper.writeValueAsString(input.getRequest()),
+				mapper.writeValueAsString(input.getResponse()));
 	}
 
 	public InOutConfiguration xform(final InOutConfigurationDO input) throws IOException {
-		return new InOutConfiguration(input.getName(), mapper.readValue(input.getRequest(), HTTPRequest.class),
+		return new InOutConfiguration(input.getId(), input.getName(),
+				mapper.readValue(input.getRequest(), HTTPRequest.class),
 				mapper.readValue(input.getResponse(), HTTPResponse.class));
 	}
-
-
 
 }

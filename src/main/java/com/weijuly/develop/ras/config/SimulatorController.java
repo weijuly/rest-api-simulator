@@ -6,10 +6,7 @@ import com.weijuly.develop.ras.impl.Admin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -31,9 +28,9 @@ public class SimulatorController {
 		return new Item(counter.incrementAndGet(), "foosa");
 	}
 
-	@RequestMapping(path = "/admin", method = GET)
-	public String admin() {
-		return "admin console";
+	@RequestMapping(path = "/admin/{id}", method = GET)
+	public ResponseEntity<String> admin(@PathVariable Long id) {
+		return admin.get(id);
 	}
 
 	@RequestMapping(path = "/admin", method = POST)

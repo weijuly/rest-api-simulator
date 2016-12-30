@@ -11,11 +11,17 @@ import com.weijuly.develop.ras.xform.DataTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.OK;
 
 public class AdminImpl implements Admin {
 
@@ -30,29 +36,42 @@ public class AdminImpl implements Admin {
 
 	final Logger logger = LoggerFactory.getLogger(AdminImpl.class);
 
-	public ResponseEntity<String> create(InOutConfiguration inOutConfiguration) {
-		logger.info(">>create>>");
+	@Override
+	public ResponseEntity<String> create(InOutConfiguration request) {
 		try {
-			System.out.println("admin >> mapper" + mapper);
-			InputValidator.validate(inOutConfiguration);
-			InOutConfigurationDO inOutConfigurationDO = xformer.xform(inOutConfiguration);
-			inOutConfigurationDO = dao.save(inOutConfigurationDO);
-			logger.info("saved configuration successfully" + inOutConfigurationDO.getId());
-
-		} catch (ConfigException | JsonProcessingException ex) {
+			InputValidator.validate(request);
+			InOutConfigurationDO dataObject = xformer.xform(request);
+			dataObject = dao.save(dataObject);
+			logger.info("saved configuration successfully with id:" + dataObject.getId());
+			InOutConfiguration response = xformer.xform(dataObject);
+			return ResponseEntity.status(CREATED).body(toString(response));
+		} catch (ConfigException | IOException ex) {
 			SimulatorError error = new SimulatorError("INPUT", ex.getMessage());
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(toString(error));
-		}  finally {
-			System.out.println("aqua");
+			return ResponseEntity.status(BAD_REQUEST).body(toString(error));
 		}
-
-		logger.info("<<create<<");
-		return ResponseEntity.status(HttpStatus.CREATED).body(toString(inOutConfiguration));
 	}
 
+	@Override
 	public List<InOutConfiguration> list() {
 		List<InOutConfiguration> configs = new ArrayList<InOutConfiguration>();
 		return configs;
+	}
+
+	@Override
+	public ResponseEntity<String> get(Long id) {
+		try {
+			logger.info("got request for:{}", id);
+			InOutConfigurationDO dataObject = dao.findOne(id);
+			if(dataObject == null){
+				return ResponseEntity.status(NOT_FOUND).body("");
+			}
+			InOutConfiguration response = xformer.xform(dataObject);
+			return ResponseEntity.status(OK).body(toString(response));
+		} catch (IOException ex) {
+			SimulatorError error = new SimulatorError("INPUT", ex.getMessage());
+			return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(toString(error));
+		}
+
 	}
 
 	private String toString(Object object) {
