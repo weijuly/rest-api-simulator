@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -26,23 +27,27 @@ import static org.springframework.http.HttpStatus.OK;
 public class AdminImpl implements Admin {
 
 	@Autowired
-	DataTransformer xformer;
+	private DataTransformer xformer;
 
 	@Autowired
-	ObjectMapper mapper;
+	private ObjectMapper mapper;
 
 	@Autowired
-	InOutConfigurationDAO dao;
+	private InOutConfigurationDAO dao;
 
-	final Logger logger = LoggerFactory.getLogger(AdminImpl.class);
+	final private Logger logger = LoggerFactory.getLogger(AdminImpl.class);
 
 	@Override
 	public ResponseEntity<String> create(InOutConfiguration request) {
 		try {
 			InputValidator.validate(request);
+			if (exists(request)) {
+				logger.warn("duplicate entry for name {}", request.getName());
+				return ResponseEntity.status(CONFLICT).body(toString(xformer.xform(dao.findByName(request.getName()))));
+			}
 			InOutConfigurationDO dataObject = xformer.xform(request);
 			dataObject = dao.save(dataObject);
-			logger.info("saved configuration successfully with id:" + dataObject.getId());
+			logger.info("saved configuration successfully with id: {}", dataObject.getId());
 			InOutConfiguration response = xformer.xform(dataObject);
 			return ResponseEntity.status(CREATED).body(toString(response));
 		} catch (ConfigException | IOException ex) {
@@ -52,9 +57,18 @@ public class AdminImpl implements Admin {
 	}
 
 	@Override
-	public List<InOutConfiguration> list() {
-		List<InOutConfiguration> configs = new ArrayList<InOutConfiguration>();
-		return configs;
+	public ResponseEntity<String> list() {
+		try {
+			List<InOutConfiguration> configurations = new ArrayList<>();
+			for (InOutConfigurationDO dataObj : dao.findAll()) {
+				configurations.add(xformer.xform(dataObj));
+			}
+			String response = toString(configurations);
+			return ResponseEntity.status(OK).body(response);
+		} catch (IOException ex) {
+			SimulatorError error = new SimulatorError("INPUT", ex.getMessage());
+			return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(toString(error));
+		}
 	}
 
 	@Override
@@ -62,10 +76,27 @@ public class AdminImpl implements Admin {
 		try {
 			logger.info("got request for:{}", id);
 			InOutConfigurationDO dataObject = dao.findOne(id);
-			if(dataObject == null){
+			if (dataObject == null) {
 				return ResponseEntity.status(NOT_FOUND).body("");
 			}
 			InOutConfiguration response = xformer.xform(dataObject);
+			return ResponseEntity.status(OK).body(toString(response));
+		} catch (IOException ex) {
+			SimulatorError error = new SimulatorError("INPUT", ex.getMessage());
+			return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(toString(error));
+		}
+
+	}
+
+	@Override
+	public ResponseEntity<String> delete(Long id) {
+		try {
+			if (dao.findOne(id) == null) {
+				SimulatorError error = new SimulatorError("INPUT", "cannot delete a non-existent entry");
+				return ResponseEntity.status(NOT_FOUND).body(toString(error));
+			}
+			InOutConfiguration response = xformer.xform(dao.findOne(id));
+			dao.delete(id);
 			return ResponseEntity.status(OK).body(toString(response));
 		} catch (IOException ex) {
 			SimulatorError error = new SimulatorError("INPUT", ex.getMessage());
@@ -80,6 +111,10 @@ public class AdminImpl implements Admin {
 		} catch (JsonProcessingException jpEx) {
 			return null;
 		}
+	}
+
+	private boolean exists(InOutConfiguration configuration) {
+		return dao.findByName(configuration.getName()) != null;
 	}
 
 }

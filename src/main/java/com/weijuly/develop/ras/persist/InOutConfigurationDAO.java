@@ -7,4 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 public interface InOutConfigurationDAO
 		extends CrudRepository<InOutConfigurationDO, Long> {
 
+	InOutConfigurationDO findByName(String name);
+
 }

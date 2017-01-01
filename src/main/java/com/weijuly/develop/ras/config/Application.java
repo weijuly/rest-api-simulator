@@ -1,8 +1,6 @@
 package com.weijuly.develop.ras.config;
 
-import com.weijuly.develop.ras.impl.Admin;
-import com.weijuly.develop.ras.impl.AdminImpl;
-import com.weijuly.develop.ras.impl.AdminTransportLogger;
+import com.weijuly.develop.ras.impl.*;
 import com.weijuly.develop.ras.validator.InputValidator;
 import com.weijuly.develop.ras.xform.DataTransformer;
 import org.springframework.boot.SpringApplication;
@@ -26,6 +24,11 @@ public class Application extends WebMvcConfigurerAdapter {
 	@Bean
 	public Admin admin() {
 		return new AdminImpl();
+	}
+
+	@Bean
+	public Simulator simulator() {
+		return new SimulatorImpl();
 	}
 
 	@Bean
